@@ -1,5 +1,6 @@
 
 # AND，NAND， OR具有相同的感知机，只是权重和偏置不一样
+# XOR多层感知机
 
 import numpy as np
 
