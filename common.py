@@ -23,6 +23,7 @@ def identity_func(x):
     return x
 
 
+# 一维
 # def softmax(x):
 #     c = np.max(x)
 #     exp_x = np.exp(x - c)
@@ -30,6 +31,7 @@ def identity_func(x):
 #     y = exp_x/sum_exp_x
 #     return y
 
+# 通用softmax
 def softmax(x):
     if x.ndim == 2:
         x = x.T
@@ -40,10 +42,9 @@ def softmax(x):
     x = x - np.max(x)  # 溢出对策
     return np.exp(x) / np.sum(np.exp(x))
 
+
 # 损失函数
 # 交叉熵
-
-
 def cross_entropy_error(y, t):
     if y.ndim == 1:
         t = t.reshape(1, t.size)
@@ -85,6 +86,7 @@ def numerical_gradient1(f, x):
     return grad
 
 
+# 使用了 NumPy 的 nditer 来提高效率
 def numerical_gradient(f, x):
     h = 1e-4
     grad = np.zeros_like(x)
