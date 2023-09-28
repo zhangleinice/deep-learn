@@ -1,3 +1,4 @@
+# 随机梯度下降
 import sys
 import os
 sys.path.append(os.pardir)
@@ -11,6 +12,7 @@ import matplotlib.pyplot as plt
 (x_train, t_train), (x_test, t_test) = load_mnist(
     normalize=True, one_hot_label=True)
 
+# 超参数调优：循环次数不是固定的，而是需要根据实验来调整，以获得最佳的模型性能
 # 超参数
 iters_num = 10000  # 适当设定循环的次数
 train_size = x_train.shape[0]
@@ -36,13 +38,16 @@ for i in range(iters_num):
     # grad = network.numerical_gradient(x_batch, t_batch)
     grad = network.gradient(x_batch, t_batch)  # 反向传播快速
 
-    # 更新参数
+    # 梯度下降，更新参数（训练）
     for key in ('W1', 'b1', 'W2', 'b2'):
         network.params[key] -= learning_rate * grad[key]
 
+
+    # 监测训练过程
     # 记录学习过程
     loss = network.loss(x_batch, t_batch)
     train_loss_list.append(loss)
+
     # 计算每一代的识别精度
     if i % iter_per_epoch == 0:
         train_acc = network.accuracy(x_train, t_train)
