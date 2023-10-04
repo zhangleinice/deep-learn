@@ -58,8 +58,6 @@ class AdaGrad:
             self.h[key] += grads[key] * grads[key]
             params[key] -= self.lr * grads[key] / (np.sqrt(self.h[key]) + 1e-7)
 
-            # 学习率减小
-            # self.lr = self.lr / (1 + epoch)
 
 # 结合了AdsGrad和Momentum的优点
 
@@ -96,8 +94,6 @@ class Adam:
             # unbias_m += (1 - self.beta1) * (grads[key] - self.m[key]) # correct bias
             # unbisa_b += (1 - self.beta2) * (grads[key]*grads[key] - self.v[key]) # correct bias
             # params[key] += self.lr * unbias_m / (np.sqrt(unbisa_b) + 1e-7)
-
-
 
 
 

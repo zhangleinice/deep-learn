@@ -5,7 +5,7 @@ from common.gradient import softmax, cross_entropy_error
 from common.util import im2col, col2im
 
 # y = x > 0 ? x : 0;
-# dx = dout > 0 ? dout: 0
+# dx = dout > 0 ? 1 * dout: 0
 class ReLU:
     def __init__(self):
         # 布尔数组
@@ -37,29 +37,58 @@ class Sigmoid:
         return dx
 
 
-# 加权和层
+# 加权和层，全连接层
+# class Affine:
+#     def __init__(self, W, b):
+#         self.W = W
+#         self.b = b
+
+#         self.x = None
+#         self.dW = None
+#         self.db = None
+
+#     def forward(self, x):
+#         # 对应张量
+#         self.x = x
+#         out = np.dot(self.x, self.W) + self.b
+
+#         return out
+
+#     # self.W.T 表示权重矩阵 self.W 的转置
+#     def backward(self, dout):
+#         dx = np.dot(dout, self.W.T)
+#         self.dW = np.dot(self.x.T, dout)
+#         self.db = np.sum(dout, axis=0)
+
+#         return dx
+    
 class Affine:
     def __init__(self, W, b):
-        self.W = W
+        self.W =W
         self.b = b
-
+        
         self.x = None
+        self.original_x_shape = None
+        # 权重和偏置参数的导数
         self.dW = None
         self.db = None
 
     def forward(self, x):
         # 对应张量
+        self.original_x_shape = x.shape
+        x = x.reshape(x.shape[0], -1)
         self.x = x
+
         out = np.dot(self.x, self.W) + self.b
 
         return out
 
-    # self.W.T 表示权重矩阵 self.W 的转置
     def backward(self, dout):
         dx = np.dot(dout, self.W.T)
         self.dW = np.dot(self.x.T, dout)
         self.db = np.sum(dout, axis=0)
-
+        
+        dx = dx.reshape(*self.original_x_shape)  # 还原输入数据的形状（对应张量）
         return dx
 
 
@@ -93,7 +122,6 @@ class SoftmaxWithLoss:
             dx = dx / batch_size
 
         return dx
-
 
 
 
@@ -230,7 +258,7 @@ class Convolution:
         self.col_W = col_W
 
         return out
-
+    
     def backward(self, dout):
         FN, C, FH, FW = self.W.shape
         dout = dout.transpose(0,2,3,1).reshape(-1, FN)
@@ -243,6 +271,8 @@ class Convolution:
         dx = col2im(dcol, self.x.shape, FH, FW, self.stride, self.pad)
 
         return dx
+
+
 
 
 class Pooling:
@@ -284,3 +314,76 @@ class Pooling:
         dx = col2im(dcol, self.x.shape, self.pool_h, self.pool_w, self.stride, self.pad)
         
         return dx
+
+# 卷积层
+# class Convolution:
+#     # W 滤波器(权重)
+#     def __init__(self, W, b, stribe=1, pad=0):
+#         self.W = W
+#         self.b = b
+#         self.stribe = stribe
+#         self.pad = pad
+    
+#     def forward(self, x):
+#         FN, C, FH, FW = self.W.shape
+#         N, C, H, W = x.shape
+#         out_h = int(1 + (H + 2* self.pad - FH)/self.stribe)
+#         out_w = int(1 + (W + 2* self.pad - FW)/self.stribe)
+
+#         col = im2col(x, FH, FW, self.stribe, self.pad)
+#         col_W = self.W.reshape(FN, -1).T
+#         out = np.dot(col, col_W) + self.b
+
+#         out = out.reshape(N, out_h, out_w, -1).transpose(0, 3, 1, 2)
+#         return out
+
+#     def backward(self, dout):
+#         FN, C, FH, FW = self.W.shape
+#         dout = dout.transpose(0,2,3,1).reshape(-1, FN)
+
+#         self.db = np.sum(dout, axis=0)
+#         self.dW = np.dot(self.col.T, dout)
+#         self.dW = self.dW.transpose(1, 0).reshape(FN, C, FH, FW)
+
+#         dcol = np.dot(dout, self.col_W.T)
+#         dx = col2im(dcol, self.x.shape, FH, FW, self.stride, self.pad)
+
+#         return dx
+    
+# 池化层
+# class Pooling:
+#     def __init__(self, pool_h, pool_w, stride=1, pad=0):
+#         self.pool_h = pool_h
+#         self.pool_w = pool_w
+#         self.stride = stride
+#         self.pad = pad
+
+#     def forward(self, x):
+#         N, C, H, W = x.shape
+#         out_h = int(1 + (H - self.pool_h) / self.stride)
+#         out_w = int(1 + (W - self.pool_w) / self.stride)
+
+#         # 按通道展开为一行
+#         col = im2col(x, self.pool_h, self.pool_w, self.stride, self.pad)
+#         col = col.reshape(-1, self.pool_h*self.pool_w)
+
+#         # 求各行最大值，Max池化
+#         out = np.max(col, axis=1)
+
+#         # (N, out_h, out_w, C) ==> (N, C, out_h, out_w)
+#         out = out.reshape(N, out_h, out_w, C).transpose(0, 3, 1, 2)
+
+#         return out
+    
+#     def backward(self, dout):
+#         dout = dout.transpose(0, 2, 3, 1)
+        
+#         pool_size = self.pool_h * self.pool_w
+#         dmax = np.zeros((dout.size, pool_size))
+#         dmax[np.arange(self.arg_max.size), self.arg_max.flatten()] = dout.flatten()
+#         dmax = dmax.reshape(dout.shape + (pool_size,)) 
+        
+#         dcol = dmax.reshape(dmax.shape[0] * dmax.shape[1] * dmax.shape[2], -1)
+#         dx = col2im(dcol, self.x.shape, self.pool_h, self.pool_w, self.stride, self.pad)
+        
+#         return dx
