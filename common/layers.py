@@ -4,7 +4,7 @@ import numpy as np
 from common.gradient import softmax, cross_entropy_error
 from common.util import im2col, col2im
 
-# y = x > 0 ? x : 0;
+# f(x) = x > 0 ? x : 0;
 # dx = dout > 0 ? 1 * dout: 0
 class ReLU:
     def __init__(self):
@@ -23,6 +23,7 @@ class ReLU:
         return dx
 
 
+# f(x) = 1/(1+e^x)
 class Sigmoid:
     def __init__(self):
         self.out = None
@@ -37,49 +38,28 @@ class Sigmoid:
         return dx
 
 
-# 加权和层，全连接层
-# class Affine:
-#     def __init__(self, W, b):
-#         self.W = W
-#         self.b = b
-
-#         self.x = None
-#         self.dW = None
-#         self.db = None
-
-#     def forward(self, x):
-#         # 对应张量
-#         self.x = x
-#         out = np.dot(self.x, self.W) + self.b
-
-#         return out
-
-#     # self.W.T 表示权重矩阵 self.W 的转置
-#     def backward(self, dout):
-#         dx = np.dot(dout, self.W.T)
-#         self.dW = np.dot(self.x.T, dout)
-#         self.db = np.sum(dout, axis=0)
-
-#         return dx
-    
+# f(x)=x⋅W+b 加权和层，全连接层    
 class Affine:
     def __init__(self, W, b):
         self.W =W
         self.b = b
-        
-        self.x = None
-        self.original_x_shape = None
         # 权重和偏置参数的导数
         self.dW = None
         self.db = None
 
+        # 输入数据的值和形状
+        # self.x = None
+        self.original_x_shape = None
+
     def forward(self, x):
         # 对应张量
         self.original_x_shape = x.shape
+        # reshape(x.shape[0], -1) 行数不变，列数 = 总元素个数 / 行数
+        # 多维数组转成二维数组，主要针对二维以上数组
         x = x.reshape(x.shape[0], -1)
-        self.x = x
+        # self.x = x
 
-        out = np.dot(self.x, self.W) + self.b
+        out = np.dot(x, self.W) + self.b
 
         return out
 
